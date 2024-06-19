@@ -1,0 +1,22 @@
+name: Linter
+
+on:
+ push:
+   branches:
+     - main # Se déclenche sur le push de la branche Main
+jobs:
+ build: # Nom du Job 
+   runs-on: ubuntu-latest # La version du Runner
+   steps:
+     - name: Checkout Vue Code
+       uses: actions/checkout@v4 # On checkout le code
+     - name: Set Up Node.js
+       uses: actions/setup-node@v4 # On installe nodejs
+       with:
+         node-version: '18' # On précise la version de nodejs
+     - name: Install Dependencies
+       working-directory: './frontend' # On se positionne dans le rep frontend
+       run: npm install # On installe NPM
+     - name: Linter
+       working-directory: './frontend'
+       run: npm run lint # On exécute le Linter 
