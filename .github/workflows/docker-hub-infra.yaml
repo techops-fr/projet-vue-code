@@ -1,0 +1,36 @@
+name: Construire et pousser les images sur DockerHub et mise à jour Infra pour déclencher ArgoCD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_push: # nom du job
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: # Pour 2 jobs en parallèle (les steps sont executés 2 fois pour frontend et node-api)
+        include:
+          - name: frontend
+            directory: ./frontend # Le sous repertoire Git du code frontend
+            image: techopsfr/app-vue-frontend # nom de l'image à créer
+          - name: node-api
+            directory: ./node-api # Le sous repertoire Git du code node-api
+            image: techopsfr/app-vue-nodeapi # nom de l'image à créer
+    steps:
+      - name: Récupérer le code source
+        uses: actions/checkout@v4       
+      - name: Obtenir le hash (7 premiers caractères) du dernier commit pour tag images
+        run: echo "VERSION=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+      - name: Connexion à DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Contruire et pousser l'image ${{ matrix.name }}
+        uses: docker/build-push-action@v6
+        with:
+            context: ${{ matrix.directory }}
+            file: ${{ matrix.directory }}/Dockerfile
+            push: true
+            tags: ${{ matrix.image }}:${{ env.VERSION }}
